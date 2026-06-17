@@ -1,0 +1,16 @@
+{
+  "name": "plusbox",
+  "version": "1.0.0",
+  "description": "Simple sandbox game",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "start main.html"
+  },
+  "keywords": [],
+  "author": "ArsRomNov",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "p5": "^2.3.0"
+  }
+}
