@@ -4,7 +4,7 @@ const grid = new Uint8Array(COLS * ROWS);
 const idx = (x,y) => y * COLS + x;
 
 // IDs
-const EMPTY = 0, SAND = 1, WATER = 2, ROCK = 3;
+const EMPTY = 0, SAND = 1, WATER = 2, ROCK = 3, DIRT = 4, INVS = 5, GRAS = 6, GRSS = 7; IRON = 8;
 
 // текущая кисть
 let currentBrush = SAND;
@@ -77,6 +77,103 @@ materials[ROCK] = {
     color: [85, 88, 92], //Цвет
     update: function(){ return false; } //Статичное положение
 };
+// Земля
+materials[DIRT] = {
+    name: 'Земля', //Название
+    color: [64, 66, 44], //Цвет
+    update: function(g, x, y){
+        const i = idx(x,y);
+        if(y >= ROWS-1) return false;
+
+        const below = idx(x, y+1);
+        if(g[below] === EMPTY){
+            g[below] = DIRT; g[i] = EMPTY; return true;
+        }
+        // Пробуем диагонали
+        if(Math.random() < 0.5){
+            if(x > 0 && g[idx(x-1,y+1)] === EMPTY){ g[idx(x-1,y+1)] = DIRT; g[i] = EMPTY; return true; }
+            if(x < COLS-1 && g[idx(x+1,y+1)] === EMPTY){ g[idx(x+1,y+1)] = DIRT; g[i] = EMPTY; return true; }
+        } else {
+            if(x < COLS-1 && g[idx(x+1,y+1)] === EMPTY){ g[idx(x+1,y+1)] = DIRT; g[i] = EMPTY; return true; }
+            if(x > 0 && g[idx(x-1,y+1)] === EMPTY){ g[idx(x-1,y+1)] = DIRT; g[i] = EMPTY; return true; }
+        }
+        return false;
+    }
+}
+
+materials[INVS] = {
+    name: 'Невидимая стена',
+    color: 'нееет',
+    update: function(){ return false; }
+}
+
+materials[GRAS] = {
+    name: 'Трава',
+    color: [4, 186, 131],
+    update: function(g, x, y){
+        const i = idx(x,y);
+
+        // Если внизу пусто
+        if(y >= ROWS-1) return false;
+        const below = idx(x, y+1);
+        if(g[below] === EMPTY){
+            g[below] = GRAS; g[i] = EMPTY; return true;
+        }
+        // Пробуем диагонали
+        if(Math.random() < 0.5){
+            if(x > 0 && g[idx(x-1,y+1)] === EMPTY){ g[idx(x-1,y+1)] = GRAS; g[i] = EMPTY; return true; }
+            if(x < COLS-1 && g[idx(x+1,y+1)] === EMPTY){ g[idx(x+1,y+1)] = GRAS; g[i] = EMPTY; return true; }
+        } else {
+            if(x < COLS-1 && g[idx(x+1,y+1)] === EMPTY){ g[idx(x+1,y+1)] = GRAS; g[i] = EMPTY; return true; }
+            if(x > 0 && g[idx(x-1,y+1)] === EMPTY){ g[idx(x-1,y+1)] = GRAS; g[i] = EMPTY; return true; }
+        }
+
+        //Рост травы
+        if(Math.random() < 0.002 && y > 0){  // Шанс роста в 1 кадр
+            const above = idx(x, y-1);
+            if(g[above] === EMPTY){
+                g[above] = GRAS; return true;
+            }
+        }
+
+        return false;
+    }
+
+}
+
+materials[IRON] = {
+    name: 'Железо',
+    color: [117, 150, 140],
+    update: function(){ return false; }
+
+    //К слову, железу в последующих версиях будет добавлена механника плавки
+}
+//Статичная трава
+materials[GRSS] = {
+    name: 'Статичная трава',
+    color: [4, 186, 131],
+    update: function(g, x, y){
+        const i = idx(x,y);
+
+        // Если внизу пусто
+        if(y >= ROWS-1) return false;
+        const below = idx(x, y+1);
+        if(g[below] === EMPTY){
+            g[below] = GRSS; g[i] = EMPTY; return true;
+        }
+        // Пробуем диагонали
+        if(Math.random() < 0.5){
+            if(x > 0 && g[idx(x-1,y+1)] === EMPTY){ g[idx(x-1,y+1)] = GRSS; g[i] = EMPTY; return true; }
+            if(x < COLS-1 && g[idx(x+1,y+1)] === EMPTY){ g[idx(x+1,y+1)] = GRSS; g[i] = EMPTY; return true; }
+        } else {
+            if(x < COLS-1 && g[idx(x+1,y+1)] === EMPTY){ g[idx(x+1,y+1)] = GRSS; g[i] = EMPTY; return true; }
+            if(x > 0 && g[idx(x-1,y+1)] === EMPTY){ g[idx(x-1,y+1)] = GRSS; g[i] = EMPTY; return true; }
+        }
+
+        return false;
+    }
+
+}
 
 //Подготовка
 function setup(){
@@ -106,7 +203,7 @@ function mouseDragged(e){
 // Запрет контекстного меню в канвасе
 document.oncontextmenu = function(){ return false; };
 
-//Кисть
+
 function applyBrush(mx, my, matId){
     const cx = floor(constrain(mx / (width / COLS), 0, COLS-1));
     const cy = floor(constrain(my / (height / ROWS), 0, ROWS-1));
@@ -162,7 +259,7 @@ function draw(){
     fill(255);
     textSize(12);
     textAlign(LEFT, TOP);
-    text(` PlusBox.js 1.0.0, Материалы: ${materials[currentBrush].name} (Переключение через 1-3)
+    text(` PlusBox.js 1.1.0, Материалы: ${materials[currentBrush].name} (Переключение через 1-8)
     ЛКМ разместить, ПКМ ластик (Нестабильно работает). C Для очистки. Размер кисти: ${brushRadius} (Переключение по +/-)`, 8, 8);
 }
 //Обработка кнопок
@@ -173,4 +270,9 @@ function keyPressed(){
     else if(key === 'C' ||key === 'c') grid.fill(EMPTY);
     else if(key === '-') brushRadius = max(1, brushRadius - 1);
     else if(key === '=') brushRadius = min(10, brushRadius + 1);
+    else if(key === '4') currentBrush = DIRT;
+    else if(key === '5') currentBrush = INVS;
+    else if(key === '6') currentBrush = GRAS;
+    else if(key === '7') currentBrush = GRSS;
+    else if(key === '8') currentBrush = IRON;
 }
