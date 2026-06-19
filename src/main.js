@@ -13,7 +13,7 @@ let brushRadius = 2;
 // Описание материалов в массиве по id
 const materials = [];
 
-
+ 
 function swapCells(g, a, b){
     const t = g[a]; g[a] = g[b]; g[b] = t;
 }
